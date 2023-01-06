@@ -13,7 +13,6 @@ FULL JOIN album a ON t.fk_album_id  =a.album_id
 WHERE a.year_of_production BETWEEN '2019' AND '2020'
 GROUP BY a.album_name ;
 
-
 --средняя продолжительность треков по каждому альбому;
 
 SELECT a.album_name , avg(t.length_track)
@@ -23,12 +22,14 @@ GROUP BY a.album_name;
 
 --все исполнители, которые не выпустили альбомы в 2020 году;
 
-SELECT p.performer_name, a.year_of_production  
-FROM performer p 
-JOIN performer_album pa ON p.performer_id = pa.fk_performer_id
-JOIN album a ON a.album_id = pa.fk_album_id 
-WHERE a.year_of_production <> '2020'
-GROUP BY p.performer_name, a.year_of_production ;
+WITH performer_album AS (
+	SELECT DISTINCT p.performer_name, a.year_of_production ye
+	FROM performer p 
+	JOIN performer_album pa ON p.performer_id = pa.fk_performer_id
+	JOIN album a ON a.album_id = pa.fk_album_id)
+SELECT DISTINCT performer_name 
+FROM performer_album
+WHERE performer_name NOT IN (SELECT performer_name FROM performer_album WHERE ye = '2020');
 
 --названия сборников, в которых присутствует конкретный исполнитель (выберите сами);
 
@@ -39,9 +40,7 @@ JOIN track t ON t.track_id = tc.fk_track_id
 JOIN album a ON a.album_id = t.fk_album_id 
 JOIN performer_album pa ON pa.fk_album_id = a.album_id 
 JOIN performer p ON p.performer_id = pa.fk_performer_id 
-WHERE p.performer_name = 'Loc-Dog'
-GROUP BY c.collection_name ;
-
+WHERE p.performer_name = 'Loc-Dog';
 
 --название альбомов, в которых присутствуют исполнители более 1 жанра;
 
@@ -61,14 +60,12 @@ FROM track t
 LEFT JOIN track_collection tc ON tc.fk_track_id = t.track_id 
 WHERE tc.fk_track_id IS NULL ;
 
-
 --исполнителя(-ей), написавшего самый короткий по продолжительности трек (теоретически таких треков может быть несколько);
 
 SELECT p.performer_name 
 FROM performer p 
 LEFT JOIN track t ON t.fk_performer_id = p.performer_id 
 WHERE t.length_track <= (SELECT min(DISTINCT length_track) FROM track);
-
 
 --название альбомов, содержащих наименьшее количество треков.
 
